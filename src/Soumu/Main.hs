@@ -21,9 +21,9 @@ type Result = [Row]
 data Row = Row
   { code :: Text
   , prefeacture :: Text
-  , city :: Text
   , prefeactureKana :: Text
-  , cityKana :: Text
+  , city :: Maybe Text
+  , cityKana :: Maybe Text
   }
   deriving (Show, Eq, Generic)
   deriving anyclass (ToJSON)
@@ -32,10 +32,14 @@ instance TextShow Row where
   showb Row{..} =
     "{\"code\":\"" <> TextShow.fromText code <>
     "\",\"prefeacture\":\"" <> TextShow.fromText prefeacture <>
-    "\",\"city\":\"" <> TextShow.fromText city <>
     "\",\"prefeactureKana\":\"" <> TextShow.fromText prefeactureKana <>
-    "\",\"cityKana\":\"" <> TextShow.fromText cityKana <>
-    "\"}"
+    "\",\"city\":" <> fromTextOrNothing city <>
+    ",\"cityKana\":" <> fromTextOrNothing cityKana <>
+    "}"
+    where
+      fromTextOrNothing :: Maybe Text -> TextShow.Builder
+      fromTextOrNothing Nothing = "null"
+      fromTextOrNothing (Just x) = "\"" <> TextShow.fromText x <> "\""
 
 mainSheetName :: Text
 mainSheetName = "R1.5.1現在の団体"
@@ -73,12 +77,15 @@ readToNormalize xlsFile = runExceptT do
 -- | Converts A plain row to Result's row
 rowToRow :: Worksheet -> Int -> Maybe Row
 rowToRow sheet rowNum =
-  Row <$>
-    sheet ^. cellValueAt (rowNum, columnOfCode)           . _Just . to textCell <*>
-    sheet ^. cellValueAt (rowNum, columnOfPrefecture)     . _Just . to textCell <*>
-    sheet ^. cellValueAt (rowNum, columnOfCity)           . _Just . to textCell <*>
-    sheet ^. cellValueAt (rowNum, columnOfPrefectureKana) . _Just . to textCell <*>
-    sheet ^. cellValueAt (rowNum, columnOfCityKana)       . _Just . to textCell
+  let maybeToRow = Row <$>
+        sheet ^. cellValueAt (rowNum, columnOfCode)           . _Just . to textCell <*>
+        sheet ^. cellValueAt (rowNum, columnOfPrefecture)     . _Just . to textCell <*>
+        sheet ^. cellValueAt (rowNum, columnOfPrefectureKana) . _Just . to textCell
+  in case maybeToRow of
+    Nothing -> Nothing
+    Just toRow -> Just $ toRow
+      (sheet ^. cellValueAt (rowNum, columnOfCity) . _Just . to textCell)
+      (sheet ^. cellValueAt (rowNum, columnOfCityKana) . _Just . to textCell)
   where
     textCell :: CellValue -> Maybe Text
     textCell (CellText x) = Just x
