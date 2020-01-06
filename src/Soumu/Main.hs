@@ -20,8 +20,8 @@ type Result = [Row]
 
 data Row = Row
   { code :: Text
-  , prefeacture :: Text
-  , prefeactureKana :: Text
+  , prefecture :: Text
+  , prefectureKana :: Text
   , city :: Maybe Text
   , cityKana :: Maybe Text
   }
@@ -31,8 +31,8 @@ data Row = Row
 instance TextShow Row where
   showb Row{..} =
     "{\"code\":\"" <> TextShow.fromText code <>
-    "\",\"prefeacture\":\"" <> TextShow.fromText prefeacture <>
-    "\",\"prefeactureKana\":\"" <> TextShow.fromText prefeactureKana <>
+    "\",\"prefecture\":\"" <> TextShow.fromText prefecture <>
+    "\",\"prefectureKana\":\"" <> TextShow.fromText prefectureKana <>
     "\",\"city\":" <> fromTextOrNothing city <>
     ",\"cityKana\":" <> fromTextOrNothing cityKana <>
     "}"
